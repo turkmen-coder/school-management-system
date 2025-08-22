@@ -1,0 +1,334 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "School Management System - Infrastructure",
+    "tags": ["school-management", "infrastructure", "system"],
+    "style": "dark",
+    "timezone": "browser",
+    "refresh": "30s",
+    "schemaVersion": 30,
+    "version": 1,
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "CPU Usage by Service",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "school_management_cpu_usage_percent",
+            "legendFormat": "{{service}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "max": 100,
+            "min": 0
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": 2,
+        "title": "Memory Usage by Service",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "school_management_memory_usage_bytes{type=\"rss\"}",
+            "legendFormat": "{{service}} RSS"
+          },
+          {
+            "expr": "school_management_memory_usage_bytes{type=\"heap_used\"}",
+            "legendFormat": "{{service}} Heap Used"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "bytes"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        }
+      },
+      {
+        "id": 3,
+        "title": "Service Uptime",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "school_management_uptime_seconds",
+            "legendFormat": "{{service}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        }
+      },
+      {
+        "id": 4,
+        "title": "Database Connections",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "school_management_db_connections_active",
+            "legendFormat": "{{service}} - {{database}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 8
+        }
+      },
+      {
+        "id": 5,
+        "title": "Database Query Performance",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(school_management_db_query_duration_seconds_bucket[5m])) by (le, operation))",
+            "legendFormat": "{{operation}} (95th percentile)"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 16
+        }
+      },
+      {
+        "id": 6,
+        "title": "Database Query Rate",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum(rate(school_management_db_queries_total[5m])) by (operation, table)",
+            "legendFormat": "{{operation}} {{table}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "qps"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 16
+        }
+      },
+      {
+        "id": 7,
+        "title": "Error Rate by Service",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum(rate(school_management_errors_total[5m])) by (service, severity)",
+            "legendFormat": "{{service}} - {{severity}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "errors/sec"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 24
+        }
+      },
+      {
+        "id": 8,
+        "title": "Warning Rate by Service",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum(rate(school_management_warnings_total[5m])) by (service, type)",
+            "legendFormat": "{{service}} - {{type}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "warnings/sec"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 24
+        }
+      },
+      {
+        "id": 9,
+        "title": "System Resource Overview",
+        "type": "row",
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 32
+        }
+      },
+      {
+        "id": 10,
+        "title": "Average CPU Usage",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "avg(school_management_cpu_usage_percent)",
+            "legendFormat": "Average CPU %"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 70
+                },
+                {
+                  "color": "red",
+                  "value": 90
+                }
+              ]
+            }
+          }
+        },
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 0,
+          "y": 33
+        }
+      },
+      {
+        "id": 11,
+        "title": "Total Memory Usage",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(school_management_memory_usage_bytes{type=\"rss\"})",
+            "legendFormat": "Total RSS"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "bytes"
+          }
+        },
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 6,
+          "y": 33
+        }
+      },
+      {
+        "id": 12,
+        "title": "Total DB Connections",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(school_management_db_connections_active)",
+            "legendFormat": "Total Connections"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        },
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 12,
+          "y": 33
+        }
+      },
+      {
+        "id": 13,
+        "title": "Services Online",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "count(up{job=~\"school-management-.*\"} == 1)",
+            "legendFormat": "Online Services"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "red",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 4
+                },
+                {
+                  "color": "green",
+                  "value": 6
+                }
+              ]
+            }
+          }
+        },
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 18,
+          "y": 33
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Öğrenci Sözleşmesi - {{contractNo}}</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 12px; line-height: 1.4; margin: 0; padding: 20px; }
+        .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+        .header h1 { margin: 0; color: #333; font-size: 18px; }
+        .header h2 { margin: 5px 0; color: #666; font-size: 14px; }
+        .section { margin-bottom: 25px; }
+        .section-title { background-color: #f0f0f0; padding: 8px; font-weight: bold; margin-bottom: 10px; }
+        .info-grid { display: table; width: 100%; }
+        .info-row { display: table-row; }
+        .info-label, .info-value { display: table-cell; padding: 4px; border-bottom: 1px solid #eee; }
+        .info-label { font-weight: bold; width: 200px; }
+        .table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        .table th, .table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .table th { background-color: #f5f5f5; font-weight: bold; }
+        .total-row { font-weight: bold; background-color: #f9f9f9; }
+        .signature-area { margin-top: 50px; }
+        .signature-box { display: inline-block; width: 45%; text-align: center; }
+        .qr-code { text-align: center; margin: 20px 0; }
+        .footer { margin-top: 40px; font-size: 10px; color: #666; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{tenant.name}}</h1>
+        <h2>{{campus.name}} - ÖĞRENCİ SÖZLEŞMESİ</h2>
+        <p><strong>Sözleşme No:</strong> {{contractNo}} | <strong>Okul Yılı:</strong> {{schoolYear}}</p>
+    </div>
+
+    <div class="section">
+        <div class="section-title">ÖĞRENCİ BİLGİLERİ</div>
+        <div class="info-grid">
+            <div class="info-row">
+                <div class="info-label">Ad Soyad:</div>
+                <div class="info-value">{{student.firstName}} {{student.lastName}}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">T.C. Kimlik No:</div>
+                <div class="info-value">{{student.tcNo}}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Doğum Tarihi:</div>
+                <div class="info-value">{{formatDate student.birthDate}}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Sınıf Seviyesi:</div>
+                <div class="info-value">{{student.classLevel}}. Sınıf</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">VELİ BİLGİLERİ</div>
+        <div class="info-grid">
+            <div class="info-row">
+                <div class="info-label">Ad Soyad:</div>
+                <div class="info-value">{{parent.firstName}} {{parent.lastName}}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">T.C. Kimlik No:</div>
+                <div class="info-value">{{parent.tcNo}}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Telefon:</div>
+                <div class="info-value">{{parent.phone}}</div>
+            </div>
+            {{#if parent.email}}
+            <div class="info-row">
+                <div class="info-label">E-posta:</div>
+                <div class="info-value">{{parent.email}}</div>
+            </div>
+            {{/if}}
+            {{#if parent.address}}
+            <div class="info-row">
+                <div class="info-label">Adres:</div>
+                <div class="info-value">{{parent.address}}</div>
+            </div>
+            {{/if}}
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">ÜCRET DETAYLARI</div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Açıklama</th>
+                    <th>Miktar</th>
+                    <th>Birim Fiyat</th>
+                    <th>Toplam</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each items}}
+                <tr>
+                    <td>{{this.description}}</td>
+                    <td>{{this.quantity}}</td>
+                    <td>{{formatCurrency this.unitAmount}}</td>
+                    <td>{{formatCurrency this.totalAmount}}</td>
+                </tr>
+                {{/each}}
+            </tbody>
+            <tfoot>
+                <tr class="total-row">
+                    <td colspan="3"><strong>Toplam Tutar:</strong></td>
+                    <td><strong>{{formatCurrency totalAmount}}</strong></td>
+                </tr>
+                {{#if (gt discountAmount 0)}}
+                <tr>
+                    <td colspan="3">İndirim:</td>
+                    <td>-{{formatCurrency discountAmount}}</td>
+                </tr>
+                <tr class="total-row">
+                    <td colspan="3"><strong>Net Tutar:</strong></td>
+                    <td><strong>{{formatCurrency netAmount}}</strong></td>
+                </tr>
+                {{/if}}
+            </tfoot>
+        </table>
+    </div>
+
+    {{#if discounts}}
+    <div class="section">
+        <div class="section-title">İNDİRİMLER</div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>İndirim Türü</th>
+                    <th>Tutar/Oran</th>
+                    <th>Açıklama</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each discounts}}
+                <tr>
+                    <td>{{this.type}}</td>
+                    <td>
+                        {{#if this.amount}}
+                            {{formatCurrency this.amount}}
+                        {{else if this.percentage}}
+                            %{{this.percentage}}
+                        {{/if}}
+                    </td>
+                    <td>{{this.reason}}</td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+    {{/if}}
+
+    <div class="section">
+        <div class="section-title">SÖZLEŞMEİçERİĞİ</div>
+        <p>İşbu sözleşme, {{tenant.name}} ile veli arasında {{formatDate generatedAt}} tarihinde {{schoolYear}} eğitim-öğretim yılı için imzalanmıştır.</p>
+        
+        <ol>
+            <li><strong>Eğitim Ücreti:</strong> Toplam {{formatCurrency netAmount}} olan eğitim ücreti, {{installments.length}} taksitte ödenecektir.</li>
+            <li><strong>Ödeme Koşulları:</strong> Taksitler vade tarihlerinde eksiksiz olarak ödenmelidir.</li>
+            <li><strong>Gecikme Faizi:</strong> Vadesi geçen ödemeler için yasal faiz uygulanır.</li>
+            <li><strong>İptal Koşulları:</strong> Okul yönetmeliğine göre belirlenen iptal koşulları geçerlidir.</li>
+            <li><strong>Öğrenci Davranışları:</strong> Öğrenci okul kurallarına uymakla yükümlüdür.</li>
+        </ol>
+    </div>
+
+    <div class="qr-code">
+        <img src="{{qrCode}}" alt="QR Code" />
+    </div>
+
+    <div class="signature-area">
+        <div class="signature-box">
+            <div style="border-top: 1px solid #000; margin-top: 80px; padding-top: 10px;">
+                <strong>VELİ İMZASI</strong><br>
+                {{parent.firstName}} {{parent.lastName}}
+            </div>
+        </div>
+        
+        <div class="signature-box" style="float: right;">
+            <div style="border-top: 1px solid #000; margin-top: 80px; padding-top: 10px;">
+                <strong>OKUL İMZASI</strong><br>
+                {{tenant.name}}
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Bu belge {{formatDate generatedAt}} tarihinde elektronik ortamda oluşturulmuştur.</p>
+        {{#if tenant.address}}<p>{{tenant.address}}</p>{{/if}}
+        {{#if tenant.phone}}<p>Tel: {{tenant.phone}}</p>{{/if}}
+        {{#if tenant.email}}<p>E-posta: {{tenant.email}}</p>{{/if}}
+    </div>
+</body>
+</html>

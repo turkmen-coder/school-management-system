@@ -1,0 +1,24 @@
+# Global owners
+* @school-management-team
+
+# Backend services
+/services/ @backend-team @school-management-team
+/packages/auth/ @backend-team @security-team
+/packages/persistence/ @backend-team @database-team
+
+# Frontend applications
+/apps/ @frontend-team @school-management-team
+
+# Infrastructure
+/infra/ @devops-team @school-management-team
+/infra/terraform/ @devops-team @security-team
+/infra/kubernetes/ @devops-team
+
+# Security and compliance
+/infra/monitoring/ @devops-team @security-team
+/.github/workflows/security.yml @security-team
+/packages/auth/src/guards/ @security-team
+
+# Documentation
+*.md @technical-writers @school-management-team
+/docs/ @technical-writers

@@ -1,0 +1,429 @@
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../node_modules/.prisma/client"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["public", "shared"]
+}
+
+// ============= SHARED SCHEMA =============
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  domain    String   @unique
+  settings  Json     @default("{}")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  campuses      Campus[]
+  users         User[]
+  students      Student[]
+  parents       Parent[]
+  contracts     Contract[]
+  feeItems      FeeItem[]
+  prospects     Prospect[]
+  exams         Exam[]
+  notifications Notification[]
+
+  @@map("tenants")
+  @@schema("shared")
+}
+
+model Campus {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  name      String
+  address   String?
+  phone     String?
+  email     String?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant         Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  students       Student[]
+  contracts      Contract[]
+  exams          Exam[]
+  examSessions   ExamSession[]
+
+  @@map("campus")
+  @@schema("shared")
+}
+
+// ============= PUBLIC SCHEMA =============
+
+model User {
+  id           String   @id @default(uuid())
+  tenantId     String?  @map("tenant_id")
+  email        String?  @unique
+  phone        String   @unique
+  passwordHash String?  @map("password_hash")
+  role         String
+  refreshToken String?  @map("refresh_token")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@map("users")
+  @@schema("public")
+}
+
+model Student {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  campusId    String   @map("campus_id")
+  schoolYear  String   @map("school_year")
+  tcNo        String   @unique @map("tc_no")
+  studentNo   String?  @map("student_no")
+  firstName   String   @map("first_name")
+  lastName    String   @map("last_name")
+  birthDate   DateTime @map("birth_date")
+  gender      String
+  classLevel  Int      @map("class_level")
+  status      String   @default("ACTIVE")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant          Tenant            @relation(fields: [tenantId], references: [id])
+  campus          Campus            @relation(fields: [campusId], references: [id])
+  parentRelations StudentParent[]
+  contracts       Contract[]
+  examApplications ExamApplication[]
+
+  @@unique([tenantId, campusId, schoolYear, studentNo])
+  @@index([tcNo])
+  @@index([tenantId, campusId, schoolYear])
+  @@map("students")
+  @@schema("public")
+}
+
+model Parent {
+  id           String   @id @default(uuid())
+  tenantId     String   @map("tenant_id")
+  tcNo         String   @unique @map("tc_no")
+  firstName    String   @map("first_name")
+  lastName     String   @map("last_name")
+  phone        String
+  email        String?
+  address      String?
+  relationType String   @map("relation_type")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  tenant            Tenant          @relation(fields: [tenantId], references: [id])
+  studentRelations  StudentParent[]
+
+  @@index([phone])
+  @@map("parents")
+  @@schema("public")
+}
+
+model StudentParent {
+  studentId String   @map("student_id")
+  parentId  String   @map("parent_id")
+  isPrimary Boolean  @default(false) @map("is_primary")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  parent  Parent  @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
+  @@id([studentId, parentId])
+  @@map("student_parents")
+  @@schema("public")
+}
+
+// ============= CRM MODULE =============
+
+model Prospect {
+  id             String   @id @default(uuid())
+  tenantId       String   @map("tenant_id")
+  firstName      String   @map("first_name")
+  lastName       String   @map("last_name")
+  phone          String
+  email          String?
+  status         String   @default("NEW")
+  source         String?
+  score          Int?
+  stage          String?
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  tenant           Tenant            @relation(fields: [tenantId], references: [id])
+  interactions     Interaction[]
+  conversions      Conversion[]
+  examApplications ExamApplication[]
+
+  @@index([tenantId, status])
+  @@map("prospects")
+  @@schema("public")
+}
+
+model Interaction {
+  id         String   @id @default(uuid())
+  prospectId String   @map("prospect_id")
+  type       String
+  content    String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  prospect Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+
+  @@map("interactions")
+  @@schema("public")
+}
+
+model Conversion {
+  id          String   @id @default(uuid())
+  prospectId  String   @map("prospect_id")
+  studentId   String   @map("student_id")
+  convertedAt DateTime @default(now()) @map("converted_at")
+
+  prospect Prospect @relation(fields: [prospectId], references: [id])
+
+  @@map("conversions")
+  @@schema("public")
+}
+
+// ============= EXAM MODULE =============
+
+model Exam {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  campusId  String   @map("campus_id")
+  name      String
+  date      DateTime
+  duration  Int
+  status    String   @default("PLANNED")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant       Tenant            @relation(fields: [tenantId], references: [id])
+  campus       Campus            @relation(fields: [campusId], references: [id])
+  sessions     ExamSession[]
+  applications ExamApplication[]
+
+  @@map("exams")
+  @@schema("public")
+}
+
+model ExamSession {
+  id        String   @id @default(uuid())
+  examId    String   @map("exam_id")
+  campusId  String   @map("campus_id")
+  room      String
+  capacity  Int
+  startTime DateTime @map("start_time")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  exam             Exam              @relation(fields: [examId], references: [id], onDelete: Cascade)
+  campus           Campus            @relation(fields: [campusId], references: [id])
+  admissionTickets AdmissionTicket[]
+
+  @@map("exam_sessions")
+  @@schema("public")
+}
+
+model ExamApplication {
+  id         String   @id @default(uuid())
+  examId     String   @map("exam_id")
+  prospectId String?  @map("prospect_id")
+  studentId  String?  @map("student_id")
+  status     String   @default("PENDING")
+  score      Float?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  exam            Exam              @relation(fields: [examId], references: [id])
+  prospect        Prospect?         @relation(fields: [prospectId], references: [id])
+  student         Student?          @relation(fields: [studentId], references: [id])
+  admissionTicket AdmissionTicket?
+
+  @@map("exam_applications")
+  @@schema("public")
+}
+
+model AdmissionTicket {
+  id            String @id @default(uuid())
+  applicationId String @unique @map("application_id")
+  sessionId     String @map("session_id")
+  seatNumber    String @map("seat_number")
+
+  application ExamApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  session     ExamSession     @relation(fields: [sessionId], references: [id])
+
+  @@map("admission_tickets")
+  @@schema("public")
+}
+
+// ============= BILLING MODULE =============
+
+model Contract {
+  id               String   @id @default(uuid())
+  tenantId         String   @map("tenant_id")
+  campusId         String   @map("campus_id")
+  schoolYear       String   @map("school_year")
+  studentId        String   @map("student_id")
+  contractNo       String   @map("contract_no")
+  totalAmount      Decimal  @map("total_amount") @db.Decimal(10, 2)
+  discountAmount   Decimal  @default(0) @map("discount_amount") @db.Decimal(10, 2)
+  netAmount        Decimal  @map("net_amount") @db.Decimal(10, 2)
+  installmentCount Int      @map("installment_count")
+  status           String   @default("ACTIVE")
+  signedAt         DateTime? @map("signed_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  tenant         Tenant          @relation(fields: [tenantId], references: [id])
+  campus         Campus          @relation(fields: [campusId], references: [id])
+  student        Student         @relation(fields: [studentId], references: [id])
+  items          ContractItem[]
+  installments   Installment[]
+  payments       Payment[]
+  discounts      ContractDiscount[]
+
+  @@unique([tenantId, campusId, schoolYear, contractNo])
+  @@index([studentId])
+  @@map("contracts")
+  @@schema("public")
+}
+
+model FeeItem {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  schoolYear  String   @map("school_year")
+  name        String
+  amount      Decimal  @db.Decimal(10, 2)
+  category    String?
+  isMandatory Boolean  @default(true) @map("is_mandatory")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant        Tenant         @relation(fields: [tenantId], references: [id])
+  contractItems ContractItem[]
+
+  @@map("fee_items")
+  @@schema("public")
+}
+
+model ContractItem {
+  id          String   @id @default(uuid())
+  contractId  String   @map("contract_id")
+  feeItemId   String   @map("fee_item_id")
+  description String?
+  quantity    Int      @default(1)
+  unitAmount  Decimal  @map("unit_amount") @db.Decimal(10, 2)
+  totalAmount Decimal  @map("total_amount") @db.Decimal(10, 2)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  contract Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  feeItem  FeeItem  @relation(fields: [feeItemId], references: [id])
+
+  @@map("contract_items")
+  @@schema("public")
+}
+
+model ContractDiscount {
+  id         String   @id @default(uuid())
+  contractId String   @map("contract_id")
+  type       String   @map("discount_type")
+  amount     Decimal? @db.Decimal(10, 2)
+  percentage Float?
+  reason     String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  contract Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@map("contract_discounts")
+  @@schema("public")
+}
+
+model Installment {
+  id         String    @id @default(uuid())
+  contractId String    @map("contract_id")
+  sequenceNo Int       @map("sequence_no")
+  amount     Decimal   @db.Decimal(10, 2)
+  dueDate    DateTime  @map("due_date")
+  status     String    @default("PENDING")
+  paidAmount Decimal   @default(0) @map("paid_amount") @db.Decimal(10, 2)
+  paidAt     DateTime? @map("paid_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  contract Contract  @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  payments Payment[]
+
+  @@unique([contractId, sequenceNo])
+  @@index([dueDate, status])
+  @@map("installments")
+  @@schema("public")
+}
+
+// ============= PAYMENT MODULE =============
+
+model Payment {
+  id                    String    @id @default(uuid())
+  contractId            String    @map("contract_id")
+  installmentId         String?   @map("installment_id")
+  amount                Decimal   @db.Decimal(10, 2)
+  method                String
+  providerName          String?   @map("provider_name")
+  providerTransactionId String?   @map("provider_transaction_id")
+  status                String    @default("PENDING")
+  providerResponse      Json?     @map("provider_response")
+  processedAt           DateTime? @map("processed_at")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  contract    Contract     @relation(fields: [contractId], references: [id])
+  installment Installment? @relation(fields: [installmentId], references: [id])
+  refunds     Refund[]
+
+  @@index([contractId, status])
+  @@index([providerTransactionId])
+  @@map("payments")
+  @@schema("public")
+}
+
+model Refund {
+  id        String   @id @default(uuid())
+  paymentId String   @map("payment_id")
+  amount    Decimal  @db.Decimal(10, 2)
+  reason    String?
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  payment Payment @relation(fields: [paymentId], references: [id])
+
+  @@map("refunds")
+  @@schema("public")
+}
+
+// ============= NOTIFICATION MODULE =============
+
+model Notification {
+  id          String    @id @default(uuid())
+  tenantId    String    @map("tenant_id")
+  recipient   String
+  type        String
+  subject     String?
+  content     String
+  status      String    @default("PENDING")
+  sentAt      DateTime? @map("sent_at")
+  error       String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, status])
+  @@map("notifications")
+  @@schema("public")
+}

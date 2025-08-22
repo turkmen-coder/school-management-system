@@ -1,0 +1,75 @@
+groups:
+  - name: system-alerts
+    rules:
+      - alert: ServiceDown
+        expr: up{job=~"school-management-.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.job }} has been down for more than 1 minute."
+
+      - alert: HighMemoryUsage
+        expr: school_management_memory_usage_bytes{type="rss"} > 1000000000  # 1GB
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.service }}"
+          description: "{{ $labels.service }} is using {{ $value | humanize }}B of memory."
+
+      - alert: HighCPUUsage
+        expr: school_management_cpu_usage_percent > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.service }}"
+          description: "{{ $labels.service }} CPU usage is {{ $value }}%"
+
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(school_management_http_requests_total{status_code=~"5.."}[5m])) by (service) /
+            sum(rate(school_management_http_requests_total[5m])) by (service)
+          ) * 100 > 5
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on {{ $labels.service }}"
+          description: "{{ $labels.service }} error rate is {{ $value | printf \"%.2f\" }}%"
+
+      - alert: SlowResponseTime
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(school_management_http_request_duration_seconds_bucket[5m])) by (le, service)
+          ) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow response time on {{ $labels.service }}"
+          description: "{{ $labels.service }} 95th percentile response time is {{ $value }}s"
+
+      - alert: DatabaseConnectionsHigh
+        expr: school_management_db_connections_active > 50
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High database connections on {{ $labels.service }}"
+          description: "{{ $labels.service }} has {{ $value }} active database connections"
+
+      - alert: SlowDatabaseQuery
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(school_management_db_query_duration_seconds_bucket[5m])) by (le, operation)
+          ) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow database queries"
+          description: "{{ $labels.operation }} queries 95th percentile duration is {{ $value }}s"

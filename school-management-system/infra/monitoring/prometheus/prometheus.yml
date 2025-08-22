@@ -1,0 +1,88 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'school-management'
+    environment: 'development'
+
+rule_files:
+  - "alerts/*.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # School Management Services
+  - job_name: 'school-management-iam'
+    static_configs:
+      - targets: ['iam-service:3001']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  - job_name: 'school-management-crm'
+    static_configs:
+      - targets: ['crm-service:3002']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  - job_name: 'school-management-enrollment'
+    static_configs:
+      - targets: ['enrollment-service:3003']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  - job_name: 'school-management-exam'
+    static_configs:
+      - targets: ['exam-service:3004']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  - job_name: 'school-management-documents'
+    static_configs:
+      - targets: ['documents-service:3005']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  - job_name: 'school-management-notifications'
+    static_configs:
+      - targets: ['notifications-service:3006']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # Infrastructure
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+
+  - job_name: 'kafka'
+    static_configs:
+      - targets: ['kafka-exporter:9308']
+
+  # Node Exporter for system metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  # Health checks
+  - job_name: 'health-checks'
+    metrics_path: '/health'
+    static_configs:
+      - targets:
+        - 'iam-service:3001'
+        - 'crm-service:3002'
+        - 'enrollment-service:3003'
+        - 'exam-service:3004'
+        - 'documents-service:3005'
+        - 'notifications-service:3006'

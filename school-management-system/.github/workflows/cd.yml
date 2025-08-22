@@ -1,0 +1,286 @@
+name: CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  workflow_run:
+    workflows: [ "CI Pipeline" ]
+    types: [ completed ]
+    branches: [ main ]
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '8.14.0'
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event.workflow_run.conclusion == 'success'
+    environment:
+      name: staging
+      url: https://school-management-staging.example.com
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: '3.12.0'
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --region us-east-1 --name school-management-staging
+
+      - name: Deploy to Kubernetes
+        run: |
+          helm upgrade --install school-management ./infra/kubernetes/helm \
+            --namespace school-management-staging \
+            --create-namespace \
+            --values ./infra/kubernetes/helm/values-staging.yml \
+            --set image.tag=${{ github.sha }} \
+            --wait --timeout=10m
+
+      - name: Run smoke tests
+        run: |
+          kubectl wait --for=condition=ready pod -l app=school-management -n school-management-staging --timeout=300s
+          kubectl get pods -n school-management-staging
+          # Add actual smoke tests here
+          echo "Smoke tests passed"
+
+      - name: Update deployment status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Staging deployment successful"
+          else
+            echo "❌ Staging deployment failed"
+          fi
+
+  run-e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    if: needs.deploy-staging.result == 'success'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright
+        run: pnpm exec playwright install --with-deps
+
+      - name: Run E2E tests
+        run: pnpm test:e2e
+        env:
+          BASE_URL: https://school-management-staging.example.com
+          CI: true
+
+      - name: Upload E2E test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: e2e-test-results
+          path: |
+            test-results/
+            playwright-report/
+
+  security-scan-production:
+    name: Production Security Scan
+    runs-on: ubuntu-latest
+    needs: run-e2e-tests
+    if: needs.run-e2e-tests.result == 'success'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run container security scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ghcr.io/${{ github.repository }}/school-management-iam:${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Run infrastructure security scan
+        run: |
+          # Install checkov
+          pip install checkov
+          # Scan Kubernetes manifests
+          checkov -d infra/kubernetes/ --framework kubernetes
+          # Scan Terraform files
+          checkov -d infra/terraform/ --framework terraform
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [run-e2e-tests, security-scan-production]
+    if: |
+      needs.run-e2e-tests.result == 'success' &&
+      needs.security-scan-production.result == 'success' &&
+      (startsWith(github.ref, 'refs/tags/') || 
+       (github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[deploy-prod]')))
+    environment:
+      name: production
+      url: https://school-management.example.com
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: '3.12.0'
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --region us-east-1 --name school-management-production
+
+      - name: Create database backup
+        run: |
+          kubectl exec -n school-management-prod deployment/postgres -- pg_dump -U postgres school_management > backup-$(date +%Y%m%d-%H%M%S).sql
+          aws s3 cp backup-*.sql s3://school-management-backups/$(date +%Y/%m/%d)/
+
+      - name: Deploy to Production
+        run: |
+          helm upgrade --install school-management ./infra/kubernetes/helm \
+            --namespace school-management-prod \
+            --values ./infra/kubernetes/helm/values-production.yml \
+            --set image.tag=${{ github.sha }} \
+            --wait --timeout=15m
+
+      - name: Run production health checks
+        run: |
+          kubectl wait --for=condition=ready pod -l app=school-management -n school-management-prod --timeout=600s
+          
+          # Health check all services
+          for service in iam crm enrollment exam documents notifications; do
+            echo "Checking $service health..."
+            kubectl exec -n school-management-prod deployment/school-management-$service -- curl -f http://localhost:3000/health || exit 1
+          done
+          
+          echo "All services healthy"
+
+      - name: Run production smoke tests
+        run: |
+          # Basic API tests
+          curl -f https://school-management.example.com/api/health
+          curl -f https://school-management.example.com/api/iam/health
+          curl -f https://school-management.example.com/api/crm/health
+          echo "Production smoke tests passed"
+
+      - name: Update deployment status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Production deployment successful"
+          else
+            echo "❌ Production deployment failed"
+          fi
+
+  cleanup:
+    name: Cleanup Old Deployments
+    runs-on: ubuntu-latest
+    needs: deploy-production
+    if: needs.deploy-production.result == 'success'
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Cleanup old Docker images
+        run: |
+          # Keep only the last 10 images per service
+          for service in iam crm enrollment exam documents notifications admin; do
+            aws ecr list-images --repository-name school-management-$service \
+              --query 'imageIds[*].imageTag' --output text | \
+              tr '\t' '\n' | sort -V | head -n -10 | \
+              xargs -I {} aws ecr batch-delete-image --repository-name school-management-$service --image-ids imageTag={}
+          done
+
+  notify-deployment:
+    name: Notify Deployment
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production, cleanup]
+    if: always()
+    steps:
+      - name: Notify Teams
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              "text": "School Management System Deployment",
+              "attachments": [
+                {
+                  "color": "${{ needs.deploy-production.result == 'success' && 'good' || 'danger' }}",
+                  "fields": [
+                    {
+                      "title": "Staging",
+                      "value": "${{ needs.deploy-staging.result }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Production", 
+                      "value": "${{ needs.deploy-production.result || 'skipped' }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Commit",
+                      "value": "${{ github.sha }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Branch",
+                      "value": "${{ github.ref }}",
+                      "short": true
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

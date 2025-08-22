@@ -1,0 +1,68 @@
+groups:
+  - name: business-alerts
+    rules:
+      - alert: LowEnrollmentRate
+        expr: |
+          (
+            increase(school_management_student_enrollments_total{status="active"}[24h]) <
+            increase(school_management_student_enrollments_total{status="active"}[24h] offset 7d) * 0.8
+          )
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low enrollment rate detected"
+          description: "Daily enrollment rate is 20% below last week's rate"
+
+      - alert: HighConversionDropOff
+        expr: |
+          (
+            sum(school_management_prospect_conversions_total{stage="enrolled"}) /
+            sum(school_management_prospect_conversions_total{stage="lead"})
+          ) * 100 < 10
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low conversion rate from leads to enrollments"
+          description: "Lead to enrollment conversion rate is {{ $value | printf \"%.2f\" }}%"
+
+      - alert: ExamApplicationPileup
+        expr: |
+          sum(school_management_exam_applications_total{status="pending"}) > 100
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High number of pending exam applications"
+          description: "{{ $value }} exam applications are pending processing"
+
+      - alert: ZeroActiveUsers
+        expr: sum(school_management_active_users) == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "No active users in the system"
+          description: "System shows zero active users, possible authentication or tracking issue"
+
+      - alert: UnusuallyHighUserActivity
+        expr: |
+          sum(school_management_active_users) > 
+          avg_over_time(sum(school_management_active_users)[7d:1h]) * 2
+        for: 10m
+        labels:
+          severity: info
+        annotations:
+          summary: "Unusually high user activity"
+          description: "Current active users ({{ $value }}) is more than 2x the 7-day average"
+
+      - alert: BusinessProcessFailure
+        expr: |
+          sum(rate(school_management_errors_total{type="business_process"}[5m])) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Business process failure detected"
+          description: "Critical business process errors detected at {{ $value }}/sec rate"

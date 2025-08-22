@@ -1,0 +1,286 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "School Management System - Business Metrics",
+    "tags": ["school-management", "business", "kpi"],
+    "style": "dark",
+    "timezone": "browser",
+    "refresh": "5m",
+    "schemaVersion": 30,
+    "version": 1,
+    "time": {
+      "from": "now-7d",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Daily Student Enrollments",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "increase(school_management_student_enrollments_total[1d])",
+            "legendFormat": "{{tenant_id}} - {{class_level}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": 2,
+        "title": "Enrollment Status Distribution",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sum(school_management_student_enrollments_total) by (status)",
+            "legendFormat": "{{status}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        }
+      },
+      {
+        "id": 3,
+        "title": "Daily Exam Applications",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "increase(school_management_exam_applications_total[1d])",
+            "legendFormat": "{{tenant_id}} - {{exam_type}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        }
+      },
+      {
+        "id": 4,
+        "title": "Exam Application Status",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sum(school_management_exam_applications_total) by (status)",
+            "legendFormat": "{{status}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 8
+        }
+      },
+      {
+        "id": 5,
+        "title": "Prospect Conversion Funnel",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "increase(school_management_prospect_conversions_total[1d])",
+            "legendFormat": "{{stage}} - {{source}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 16
+        }
+      },
+      {
+        "id": 6,
+        "title": "Active Users by Role",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum(school_management_active_users) by (role)",
+            "legendFormat": "{{role}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 16
+        }
+      },
+      {
+        "id": 7,
+        "title": "Key Performance Indicators",
+        "type": "row",
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 24
+        }
+      },
+      {
+        "id": 8,
+        "title": "Total Students",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(school_management_student_enrollments_total{status=\"active\"})",
+            "legendFormat": "Active Students"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "color": {
+              "mode": "palette-classic"
+            }
+          }
+        },
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 0,
+          "y": 25
+        }
+      },
+      {
+        "id": 9,
+        "title": "Conversion Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(school_management_prospect_conversions_total{stage=\"enrolled\"}) / sum(school_management_prospect_conversions_total{stage=\"lead\"}) * 100",
+            "legendFormat": "Lead to Enrollment %"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "max": 100,
+            "min": 0,
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "red",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 10
+                },
+                {
+                  "color": "green",
+                  "value": 25
+                }
+              ]
+            }
+          }
+        },
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 6,
+          "y": 25
+        }
+      },
+      {
+        "id": 10,
+        "title": "Monthly Growth",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "(sum(increase(school_management_student_enrollments_total[30d])) - sum(increase(school_management_student_enrollments_total[60d] offset 30d))) / sum(increase(school_management_student_enrollments_total[60d] offset 30d)) * 100",
+            "legendFormat": "Enrollment Growth %"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "red",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 0
+                },
+                {
+                  "color": "green",
+                  "value": 5
+                }
+              ]
+            }
+          }
+        },
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 12,
+          "y": 25
+        }
+      },
+      {
+        "id": 11,
+        "title": "Average Daily Active Users",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "avg_over_time(sum(school_management_active_users)[7d])",
+            "legendFormat": "7-day Average"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        },
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 18,
+          "y": 25
+        }
+      }
+    ]
+  }
+}
