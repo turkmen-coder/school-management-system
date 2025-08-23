@@ -42,7 +42,7 @@ export abstract class BaseKafkaConsumer implements OnModuleInit, OnModuleDestroy
       const eventType = message.headers?.type?.toString();
       const eventData = JSON.parse(message.value?.toString() || '{}');
 
-      await this.processEvent(topic, eventType, eventData);
+      await this.processEvent(topic, eventType || 'unknown', eventData);
     } catch (error) {
       console.error('Failed to process message:', error);
       // Implement dead letter queue logic here

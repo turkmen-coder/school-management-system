@@ -1,6 +1,6 @@
 import { Injectable, LoggerService } from '@nestjs/common';
 import * as winston from 'winston';
-import * as DailyRotateFile from 'winston-daily-rotate-file';
+import DailyRotateFile = require('winston-daily-rotate-file');
 
 export interface LogContext {
   tenantId?: string;
@@ -16,6 +16,19 @@ export interface LogContext {
   statusCode?: number;
   error?: Error;
   metadata?: Record<string, any>;
+  category?: string;
+  action?: string;
+  table?: string;
+  queueName?: string;
+  metric?: string;
+  value?: number;
+  unit?: string;
+  event?: string;
+  resource?: string;
+  entity?: string;
+  resourceId?: string;
+  entityId?: string;
+  auditTimestamp?: Date;
 }
 
 @Injectable()

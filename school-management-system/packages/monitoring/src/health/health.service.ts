@@ -5,6 +5,7 @@ import {
   TypeOrmHealthIndicator,
   MemoryHealthIndicator,
   DiskHealthIndicator,
+  HealthIndicatorResult,
 } from '@nestjs/terminus';
 
 @Injectable()
@@ -57,7 +58,7 @@ export class HealthService {
     ]);
   }
 
-  private async checkDependentServices() {
+  private async checkDependentServices(): Promise<HealthIndicatorResult> {
     try {
       // Check Redis connection
       const redisHealthy = await this.checkRedisHealth();
@@ -86,13 +87,13 @@ export class HealthService {
       return {
         'dependent-services': {
           status: 'down',
-          message: error.message,
+          message: (error as Error).message,
         },
       };
     }
   }
 
-  private async checkCriticalComponents() {
+  private async checkCriticalComponents(): Promise<HealthIndicatorResult> {
     try {
       // Check if essential services are running
       const authServiceHealthy = await this.checkServiceHealth('auth');
@@ -115,13 +116,13 @@ export class HealthService {
       return {
         'critical-components': {
           status: 'down',
-          message: error.message,
+          message: (error as Error).message,
         },
       };
     }
   }
 
-  private async checkApplicationHealth() {
+  private async checkApplicationHealth(): Promise<HealthIndicatorResult> {
     try {
       // Check application-specific health indicators
       const startupTime = process.uptime();
@@ -157,7 +158,7 @@ export class HealthService {
       return {
         'application-health': {
           status: 'down',
-          message: error.message,
+          message: (error as Error).message,
         },
       };
     }
@@ -212,7 +213,7 @@ export class HealthService {
     ]);
   }
 
-  private async checkDatabaseIntegrity() {
+  private async checkDatabaseIntegrity(): Promise<HealthIndicatorResult> {
     try {
       // Check critical tables exist and have expected structure
       // This would run basic queries to verify data integrity
@@ -227,13 +228,13 @@ export class HealthService {
       return {
         'database-integrity': {
           status: 'down',
-          message: `Database integrity check failed: ${error.message}`,
+          message: `Database integrity check failed: ${(error as Error).message}`,
         },
       };
     }
   }
 
-  private async checkCriticalBusinessProcesses() {
+  private async checkCriticalBusinessProcesses(): Promise<HealthIndicatorResult> {
     try {
       // Check if critical business processes are working
       // For example: can create a student, can process an application, etc.
@@ -262,7 +263,7 @@ export class HealthService {
       return {
         'business-processes': {
           status: 'down',
-          message: error.message,
+          message: (error as Error).message,
         },
       };
     }

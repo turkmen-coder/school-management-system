@@ -18,7 +18,9 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@school/persistence": ["../../packages/persistence/src"],
+      "@school/monitoring": ["../../packages/monitoring/src"]
     }
   },
   "include": ["src/**/*"],

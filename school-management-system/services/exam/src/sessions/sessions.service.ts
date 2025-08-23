@@ -172,7 +172,7 @@ export class SessionsService {
       }
     }
 
-    const updateData = {
+    const updateData: any = {
       ...updateSessionDto,
       updatedAt: new Date(),
     };

@@ -27,7 +27,7 @@ export class AuthController {
   @Post('verify-otp')
   @HttpCode(HttpStatus.OK)
   async verifyOtp(@Body() dto: VerifyOtpDto) {
-    const tokens = await this.authService.verifyOtp(dto.phone, dto.otp);
+    const tokens = await this.authService.verifyOtp(dto.phone, dto.code);
     return {
       success: true,
       ...tokens,

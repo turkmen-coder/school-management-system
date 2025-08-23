@@ -81,7 +81,7 @@ export class NotificationsService {
         },
         data: {
           status: 'FAILED',
-          error: error.message,
+          error: (error as Error).message,
         },
       });
 

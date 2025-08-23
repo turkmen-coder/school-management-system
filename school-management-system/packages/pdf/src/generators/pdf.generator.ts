@@ -5,7 +5,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 export interface PdfOptions {
-  format?: string;
+  format?: 'A4' | 'A3' | 'A5' | 'Legal' | 'Letter' | 'Tabloid';
   orientation?: 'portrait' | 'landscape';
   border?: string;
   header?: {
@@ -67,10 +67,10 @@ export class PdfGenerator {
     try {
       return await QRCode.toDataURL(text, {
         width: size,
-        height: size,
+        margin: 2,
       });
     } catch (error) {
-      throw new Error(`Failed to generate QR code: ${error.message}`);
+      throw new Error(`Failed to generate QR code: ${(error as Error).message}`);
     }
   }
 

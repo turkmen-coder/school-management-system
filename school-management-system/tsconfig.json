@@ -17,11 +17,12 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@school-management/kernel": ["./packages/kernel/src"],
-      "@school-management/auth": ["./packages/auth/src"],
-      "@school-management/messaging": ["./packages/messaging/src"],
-      "@school-management/pdf": ["./packages/pdf/src"],
-      "@school-management/persistence": ["./packages/persistence/src"]
+      "@school/*": ["./packages/*/src"],
+      "@school/kernel": ["./packages/kernel/src"],
+      "@school/auth": ["./packages/auth/src"],
+      "@school/messaging": ["./packages/messaging/src"],
+      "@school/pdf": ["./packages/pdf/src"],
+      "@school/persistence": ["./packages/persistence/src"]
     },
     "plugins": [
       {
