@@ -24,10 +24,13 @@ export class LoggingInterceptor implements NestInterceptor {
     const start = Date.now();
 
     const { method, url, headers, body } = req;
-    const userAgent = headers['user-agent'] || '';
-    const ip = req.ip || req.connection.remoteAddress || '';
-    const requestId = headers['x-request-id'] || this.generateRequestId();
-    const tenantId = (Array.isArray(headers['x-tenant-id']) ? headers['x-tenant-id'][0] : headers['x-tenant-id']) as string;
+    const uaHeader = headers['user-agent'];
+    const userAgent = (Array.isArray(uaHeader) ? uaHeader[0] : uaHeader) ?? '';
+    const ip = req.ip || req.socket?.remoteAddress || '';
+    const ridHeader = headers['x-request-id'];
+    const requestId = (Array.isArray(ridHeader) ? ridHeader[0] : ridHeader) ?? this.generateRequestId();
+    const tidHeader = headers['x-tenant-id'];
+    const tenantId = Array.isArray(tidHeader) ? tidHeader[0] : tidHeader;
     const userId = (req as any).user?.id;
     const service = process.env.SERVICE_NAME || 'unknown';
 

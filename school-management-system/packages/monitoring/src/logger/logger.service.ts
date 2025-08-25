@@ -28,7 +28,7 @@ export interface LogContext {
   entity?: string;
   resourceId?: string;
   entityId?: string;
-  auditTimestamp?: Date;
+  auditTimestamp?: string;
 }
 
 @Injectable()
