@@ -22,7 +22,7 @@ export class DocumentsController {
       
       res.send(buffer);
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 
@@ -42,7 +42,7 @@ export class DocumentsController {
       
       res.send(buffer);
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 
@@ -62,7 +62,7 @@ export class DocumentsController {
       
       res.send(buffer);
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 
@@ -82,7 +82,7 @@ export class DocumentsController {
       
       res.send(buffer);
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 }

@@ -2,6 +2,45 @@
 
 Özel okulların öğrenci kayıt süreçlerini, sınav organizasyonlarını ve mali işlemlerini dijital ortamda yönetebilmesi için geliştirilmiş kapsamlı bir yazılım sistemi.
 
+## 🚀 Hızlı Başlangıç
+
+### Önkoşullar
+- Node.js 20+
+- pnpm 8+
+- Docker & Docker Compose
+- Git
+
+### Kurulum (Windows)
+```powershell
+git clone https://github.com/turkmen-coder/school-management-system.git
+cd school-management-system
+pnpm setup
+```
+
+### Kurulum (Linux/Mac)
+```bash
+git clone https://github.com/turkmen-coder/school-management-system.git
+cd school-management-system
+pnpm setup:unix
+```
+
+### Development Servisleri Başlatma
+```bash
+pnpm start:services
+```
+
+### URL'ler
+- **Admin Panel**: http://localhost:4000
+- **API Gateway**: http://localhost:3000
+- **Grafana Dashboard**: http://localhost:3009 (admin/admin)
+
+### Environment Değişkenleri
+`.env` dosyasını düzenleyerek kendi ayarlarınızı yapın:
+```bash
+cp .env.example .env
+# .env dosyasını düzenleyin
+```
+
 ## 🚀 Özellikler
 
 - **Çoklu Tenant Desteği**: Birden fazla okul kampüsünün aynı platform üzerinde işlem yapabilmesi

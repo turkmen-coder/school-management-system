@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
@@ -7,6 +7,8 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+  
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
@@ -15,40 +17,58 @@ export class AuthService {
   ) {}
 
   async requestOtp(phone: string) {
-    // Normalize phone number
-    const normalizedPhone = this.normalizePhone(phone);
-    
-    // Generate and send OTP
-    await this.otpService.generateAndSendOtp(normalizedPhone);
-    
-    return { message: 'OTP sent successfully', phone: normalizedPhone };
+    try {
+      // Normalize phone number
+      const normalizedPhone = this.normalizePhone(phone);
+      
+      this.logger.log(`OTP requested for phone: ${normalizedPhone}`);
+      
+      // Generate and send OTP
+      await this.otpService.generateAndSendOtp(normalizedPhone);
+      
+      return { message: 'OTP sent successfully', phone: normalizedPhone };
+    } catch (error) {
+      this.logger.error(`OTP request failed for phone: ${phone}`, error.stack);
+      throw error;
+    }
   }
 
   async verifyOtp(phone: string, otp: string) {
-    const normalizedPhone = this.normalizePhone(phone);
-    
-    // Verify OTP
-    const isValid = await this.otpService.verifyOtp(normalizedPhone, otp);
-    
-    if (!isValid) {
-      throw new UnauthorizedException('Invalid or expired OTP');
-    }
+    try {
+      const normalizedPhone = this.normalizePhone(phone);
+      
+      this.logger.log(`OTP verification attempt for phone: ${normalizedPhone}`);
+      
+      // Verify OTP
+      const isValid = await this.otpService.verifyOtp(normalizedPhone, otp);
+      
+      if (!isValid) {
+        this.logger.warn(`Invalid OTP attempt for phone: ${normalizedPhone}`);
+        throw new UnauthorizedException('Invalid or expired OTP');
+      }
 
-    // Find or create user
-    let user = await this.usersService.findByPhone(normalizedPhone);
-    
-    if (!user) {
-      // Auto-register new user
-      user = await this.usersService.create({
-        phone: normalizedPhone,
-        role: 'PARENT', // Default role
-      });
-    }
+      // Find or create user
+      let user = await this.usersService.findByPhone(normalizedPhone);
+      
+      if (!user) {
+        this.logger.log(`Auto-registering new user for phone: ${normalizedPhone}`);
+        // Auto-register new user
+        user = await this.usersService.create({
+          phone: normalizedPhone,
+          role: 'PARENT', // Default role
+        });
+      }
 
-    const tokens = await this.generateTokens(user);
-    await this.usersService.updateRefreshToken(user.id, tokens.refreshToken);
-    
-    return tokens;
+      const tokens = await this.generateTokens(user);
+      await this.usersService.updateRefreshToken(user.id, tokens.refreshToken);
+      
+      this.logger.log(`User authenticated successfully: ${user.id}`);
+      
+      return tokens;
+    } catch (error) {
+      this.logger.error(`OTP verification failed for phone: ${phone}`, error.stack);
+      throw error;
+    }
   }
 
   private normalizePhone(phone: string): string {

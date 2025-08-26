@@ -82,25 +82,47 @@ class ApiService {
     };
   }
 
-  // Authentication API methods
+  // Authentication API methods (Mock version for demo)
   async login(credentials: { email: string; password: string }) {
-    // TODO: Implement actual API call to IAM service
-    // For now, simulate API call with timeout
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    if (credentials.email === 'admin@school.com' && credentials.password === 'admin123') {
+    try {
+      // MOCK LOGIN - Demo amaçlı
+      console.log('Mock login attempt:', credentials);
+      
+      // Demo kullanıcıları
+      const validUsers = [
+        { email: 'admin@okul.com', password: 'admin123' },
+        { email: 'demo@okul.com', password: 'demo123' },
+        { email: 'yonetici@okul.com', password: '123456' }
+      ];
+
+      const user = validUsers.find(u => 
+        u.email === credentials.email && u.password === credentials.password
+      );
+
+      if (!user) {
+        throw new Error('Geçersiz kullanıcı adı veya şifre');
+      }
+
+      // Mock JWT token
+      const mockToken = `mock-jwt-token-${Date.now()}`;
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+
       return {
+        access_token: mockToken,
         user: {
-          id: '1',
-          name: 'Admin Kullanıcı',
-          email: credentials.email,
+          id: 1,
+          email: user.email,
+          name: user.email.split('@')[0],
           role: 'admin'
-        },
-        token: `mock-jwt-token-${Date.now()}`
+        }
       };
+
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
     }
-    
-    throw new Error('Geçersiz kullanıcı adı veya şifre');
   }
 
   async logout() {

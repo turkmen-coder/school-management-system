@@ -60,7 +60,6 @@ export class ApplicationsService {
         prospectId,
         studentId,
         status: 'PENDING',
-        applicationDate: new Date(),
         createdAt: new Date(),
       },
       include: {
@@ -71,7 +70,7 @@ export class ApplicationsService {
           select: { firstName: true, lastName: true, phone: true, email: true },
         },
         student: {
-          select: { firstName: true, lastName: true, tcKimlikNo: true },
+          select: { firstName: true, lastName: true },
         },
       },
     });
@@ -97,7 +96,7 @@ export class ApplicationsService {
           select: { firstName: true, lastName: true, phone: true, email: true },
         },
         student: {
-          select: { firstName: true, lastName: true, tcKimlikNo: true },
+          select: { firstName: true, lastName: true },
         },
         admissionTicket: {
           include: {
@@ -107,7 +106,7 @@ export class ApplicationsService {
           },
         },
       },
-      orderBy: { applicationDate: 'desc' },
+      orderBy: { createdAt: 'desc' },
       skip: filters?.page ? (filters.page - 1) * (filters.limit || 10) : 0,
       take: filters?.limit || 10,
     });
@@ -157,7 +156,7 @@ export class ApplicationsService {
           select: { firstName: true, lastName: true, phone: true, email: true },
         },
         student: {
-          select: { firstName: true, lastName: true, tcKimlikNo: true },
+          select: { firstName: true, lastName: true },
         },
       },
     });

@@ -1,0 +1,72 @@
+# Prometheus configuration
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alert_rules.yml"
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'school-api-gateway'
+    static_configs:
+      - targets: ['api-gateway:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  - job_name: 'school-iam-service'
+    static_configs:
+      - targets: ['iam-service:3001']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  - job_name: 'school-crm-service'
+    static_configs:
+      - targets: ['crm-service:3002']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  - job_name: 'school-enrollment-service'
+    static_configs:
+      - targets: ['enrollment-service:3003']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  - job_name: 'school-exam-service'
+    static_configs:
+      - targets: ['exam-service:3004']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  - job_name: 'school-billing-service'
+    static_configs:
+      - targets: ['billing-service:3005']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  - job_name: 'school-documents-service'
+    static_configs:
+      - targets: ['documents-service:3006']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  - job_name: 'school-notifications-service'
+    static_configs:
+      - targets: ['notifications-service:3007']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  - job_name: 'school-payments-service'
+    static_configs:
+      - targets: ['payments-service:3008']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093

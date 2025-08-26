@@ -3,6 +3,7 @@ import { PrismaService } from '@school/persistence';
 
 export interface CreateSessionDto {
   examId: string;
+  campusId: string;
   room: string;
   capacity: number;
   startTime: string;
@@ -22,7 +23,7 @@ export class SessionsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(createSessionDto: CreateSessionDto) {
-    const { tenantId, examId, ...sessionData } = createSessionDto;
+    const { tenantId, examId, campusId, ...sessionData } = createSessionDto;
 
     // Check if exam exists
     const exam = await this.prisma.exam.findFirst({
@@ -38,19 +39,9 @@ export class SessionsService {
       where: {
         room: sessionData.room,
         exam: { tenantId },
-        OR: [
-          {
-            AND: [
-              { startTime: { lte: new Date(sessionData.startTime) } },
-              { endTime: { gte: new Date(sessionData.startTime) } },
-            ],
-          },
-          {
-            AND: [
-              { startTime: { lte: new Date(sessionData.endTime) } },
-              { endTime: { gte: new Date(sessionData.endTime) } },
-            ],
-          },
+        AND: [
+          { startTime: { lte: new Date(sessionData.endTime) } },
+          { startTime: { gte: new Date(sessionData.startTime) } },
         ],
       },
     });
@@ -63,8 +54,8 @@ export class SessionsService {
       data: {
         ...sessionData,
         examId,
+        campusId,
         startTime: new Date(sessionData.startTime),
-        endTime: new Date(sessionData.endTime),
         createdAt: new Date(),
       },
       include: {
@@ -119,7 +110,7 @@ export class SessionsService {
                   select: { firstName: true, lastName: true, phone: true },
                 },
                 student: {
-                  select: { firstName: true, lastName: true, tcKimlikNo: true },
+                  select: { firstName: true, lastName: true },
                 },
               },
             },
@@ -143,26 +134,16 @@ export class SessionsService {
     if (updateSessionDto.room || updateSessionDto.startTime || updateSessionDto.endTime) {
       const room = updateSessionDto.room || session.room;
       const startTime = updateSessionDto.startTime ? new Date(updateSessionDto.startTime) : session.startTime;
-      const endTime = updateSessionDto.endTime ? new Date(updateSessionDto.endTime) : session.endTime;
+      const endTime = updateSessionDto.endTime ? new Date(updateSessionDto.endTime) : new Date(session.startTime.getTime() + 2 * 60 * 60 * 1000); // +2 hours default
 
       const conflictingSession = await this.prisma.examSession.findFirst({
         where: {
           id: { not: id },
           room,
           exam: { tenantId },
-          OR: [
-            {
-              AND: [
-                { startTime: { lte: startTime } },
-                { endTime: { gte: startTime } },
-              ],
-            },
-            {
-              AND: [
-                { startTime: { lte: endTime } },
-                { endTime: { gte: endTime } },
-              ],
-            },
+          AND: [
+            { startTime: { lte: endTime } },
+            { startTime: { gte: startTime } },
           ],
         },
       });

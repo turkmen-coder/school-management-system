@@ -9,7 +9,7 @@
     "infra/*"
   ],
   "scripts": {
-    "dev": "turbo run dev",
+    "dev": "turbo run dev --concurrency=15",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test": "jest",
@@ -19,10 +19,18 @@
     "test:e2e": "jest --testPathPattern=e2e-spec.ts",
     "test:unit": "jest --testPathIgnorePatterns=e2e-spec.ts",
     "clean": "turbo run clean && rm -rf node_modules",
-    "docker:dev": "docker-compose -f infra/docker/docker-compose.yml up",
-    "docker:down": "docker-compose -f infra/docker/docker-compose.yml down",
+    "docker:dev": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
     "db:migrate": "turbo run db:migrate",
-    "db:seed": "turbo run db:seed"
+    "db:seed": "turbo run db:seed",
+    "prisma:generate": "pnpm --filter @school/persistence prisma:generate",
+    "prisma:migrate": "pnpm --filter @school/persistence prisma:migrate",
+    "prisma:seed": "turbo run prisma:seed",
+    "setup": "powershell -ExecutionPolicy Bypass -File setup.ps1",
+    "setup:unix": "bash setup.sh",
+    "start:services": "docker compose up -d && pnpm dev",
+    "stop:services": "docker compose down"
   },
   "devDependencies": {
     "turbo": "^1.11.0",

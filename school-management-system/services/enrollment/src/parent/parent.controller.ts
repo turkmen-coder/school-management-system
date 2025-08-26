@@ -33,12 +33,7 @@ export class ParentController {
     @Query('limit') limit?: string,
     @Query('search') search?: string,
   ) {
-    return this.parentService.findAll(
-      tenantId,
-      page ? parseInt(page) : 1,
-      limit ? parseInt(limit) : 20,
-      search,
-    );
+    return this.parentService.findAll(tenantId);
   }
 
   @Get(':id')

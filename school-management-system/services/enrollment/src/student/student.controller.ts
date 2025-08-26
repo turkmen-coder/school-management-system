@@ -40,12 +40,7 @@ export class StudentController {
     @Query('limit') limit?: string,
     @Query('search') search?: string,
   ) {
-    return this.studentService.findAll(
-      tenantId,
-      page ? parseInt(page) : 1,
-      limit ? parseInt(limit) : 20,
-      search,
-    );
+    return this.studentService.findAll(tenantId);
   }
 
   @Get(':id')

@@ -1,5 +1,49 @@
 import { Injectable } from '@nestjs/common';
-import { AdmissionGenerator, AdmissionTicketData } from '@school-management/pdf';
+
+// TODO: Fix PDF module import when available
+interface AdmissionTicketData {
+  application: { id: string };
+  exam: {
+    id: string;
+    name: string;
+    date: Date;
+    duration: number;
+  };
+  session: {
+    id: string;
+    room: string;
+    startTime: Date;
+  };
+  candidate: {
+    firstName: string;
+    lastName: string;
+    tcNo?: string;
+    phone: string;
+  };
+  seatNumber: number;
+  instructions: string[];
+}
+
+interface ExamResult {
+  applicationId: string;
+  candidateName: string;
+  tcNo: string;
+  phone: string;
+  score: number;
+  passed: boolean;
+}
+
+class AdmissionGenerator {
+  static generateAdmissionTicket(data: AdmissionTicketData): Buffer {
+    // TODO: Implement PDF generation
+    return Buffer.from(`Mock Admission Ticket for ${data.candidate.firstName} ${data.candidate.lastName}`);
+  }
+
+  static generateExamResults(examId: string, results: ExamResult[]): Buffer {
+    // TODO: Implement PDF generation
+    return Buffer.from(`Mock Exam Results for exam ${examId} with ${results.length} candidates`);
+  }
+}
 
 @Injectable()
 export class AdmissionDocumentService {
@@ -34,7 +78,7 @@ export class AdmissionDocumentService {
       seatNumber: application.admissionTicket.seatNumber,
       instructions: [
         'Sınava kimlik belgenizle birlikte geliniz.',
-        'Sınavdan 30 dakika önce sınav salonunda bulununuz.',
+        'Sınavdan 30 dakika önce sınav salonında bulununuz.',
         'Kalem, silgi ve kalemtıraş dışında herhangi bir materyal getirilmeyecektir.',
         'Cep telefonu ve elektronik cihazlar sınav salonuna alınamaz.',
         'Sınav süresince konuşmak yasaktır.',
@@ -45,7 +89,7 @@ export class AdmissionDocumentService {
   }
 
   async generateExamResults(exam: any): Promise<Buffer> {
-    const results = exam.applications.map(app => {
+    const results = exam.applications.map((app: any) => {
       const candidate = app.prospect || app.student;
       return {
         applicationId: app.id,

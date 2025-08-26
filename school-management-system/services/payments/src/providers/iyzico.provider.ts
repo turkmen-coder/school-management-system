@@ -107,7 +107,8 @@ export class IyzicoProvider {
         )
       );
 
-      const result = response.data;
+      const responseData = response as any;
+      const result = responseData.data;
 
       if (result.status === 'success') {
         return {
@@ -157,7 +158,8 @@ export class IyzicoProvider {
         )
       );
 
-      const result = response.data;
+      const responseData = response as any;
+      const result = responseData.data;
 
       if (result.status === 'success') {
         return {
@@ -204,7 +206,8 @@ export class IyzicoProvider {
         )
       );
 
-      return response.data;
+      const responseData = response as any;
+      return responseData.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.errorMessage || error.message);
     }
@@ -274,7 +277,8 @@ export class IyzicoProvider {
         )
       );
 
-      return response.data;
+      const responseData = response as any;
+      return responseData.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.errorMessage || error.message);
     }
@@ -303,7 +307,8 @@ export class IyzicoProvider {
         )
       );
 
-      const result = response.data;
+      const responseData = response as any;
+      const result = responseData.data;
 
       if (result.status === 'success') {
         return {

@@ -121,8 +121,26 @@ export class ProspectsService {
   }
 
   async update(tenantId: string, id: string, updateProspectDto: UpdateProspectDto) {
-    // Get current prospect data
-    const currentProspect = await this.findOne(tenantId, id);
+    // Get current prospect data with interaction count
+    const currentProspect = await this.prisma.prospect.findUnique({
+      where: { id, tenantId },
+      include: {
+        interactions: true,
+        examApplications: {
+          include: {
+            exam: true,
+          },
+        },
+        conversions: true,
+        _count: {
+          select: {
+            interactions: true,
+            examApplications: true,
+          },
+        },
+      },
+    });
+
     if (!currentProspect) {
       throw new Error('Prospect not found');
     }

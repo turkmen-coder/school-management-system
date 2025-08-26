@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Öğrenci Kayıt Sözleşmesi</title>
+    <style>
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 20px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2563eb;
+            margin-bottom: 10px;
+        }
+        .contract-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .parties {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        .party {
+            background: white;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        .party-title {
+            font-weight: bold;
+            font-size: 18px;
+            color: #2563eb;
+            margin-bottom: 15px;
+        }
+        .info-row {
+            display: flex;
+            margin-bottom: 8px;
+        }
+        .info-label {
+            font-weight: 600;
+            min-width: 120px;
+        }
+        .terms {
+            margin: 30px 0;
+        }
+        .term {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-left: 4px solid #2563eb;
+        }
+        .term-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .financial-summary {
+            background: #e7f3ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+        }
+        .amount {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+        .signatures {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            margin-top: 60px;
+        }
+        .signature-area {
+            text-align: center;
+        }
+        .signature-line {
+            border-bottom: 1px solid #333;
+            height: 60px;
+            margin-bottom: 10px;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+        @media print {
+            body { padding: 0; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">{{tenant.name}}</div>
+        <div>{{tenant.address}}</div>
+        <div>Tel: {{tenant.phone}} | E-posta: {{tenant.email}}</div>
+    </div>
+
+    <div class="contract-info">
+        <h1 style="text-align: center; color: #2563eb; margin: 0;">ÖĞRENCİ KAYIT SÖZLEŞMESİ</h1>
+        <div style="text-align: center; margin-top: 15px;">
+            <strong>Sözleşme No:</strong> {{contract.contractNumber}} | 
+            <strong>Tarih:</strong> {{date contract.createdAt}} |
+            <strong>Dönem:</strong> {{contract.semester}}
+        </div>
+    </div>
+
+    <div class="parties">
+        <div class="party">
+            <div class="party-title">TARAF 1 - EĞİTİM KURUMU</div>
+            <div class="info-row">
+                <span class="info-label">Kurum Adı:</span>
+                <span>{{tenant.name}}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Adres:</span>
+                <span>{{tenant.address}}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Telefon:</span>
+                <span>{{tenant.phone}}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">E-posta:</span>
+                <span>{{tenant.email}}</span>
+            </div>
+        </div>
+
+        <div class="party">
+            <div class="party-title">TARAF 2 - VELİ</div>
+            <div class="info-row">
+                <span class="info-label">Veli Adı:</span>
+                <span>{{parent.firstName}} {{parent.lastName}}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">T.C. Kimlik:</span>
+                <span>{{parent.identityNumber}}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Telefon:</span>
+                <span>{{parent.phone}}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">E-posta:</span>
+                <span>{{parent.email}}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Öğrenci:</span>
+                <span>{{student.firstName}} {{student.lastName}}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="financial-summary">
+        <h3 style="margin-top: 0; color: #2563eb;">Mali Bilgiler</h3>
+        <div class="info-row">
+            <span class="info-label">Program:</span>
+            <span>{{contract.program}}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Dönem:</span>
+            <span>{{contract.semester}}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Toplam Tutar:</span>
+            <span class="amount">{{currency contract.totalAmount}}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Yazılışı:</span>
+            <span><em>{{numberToText contract.totalAmount}} Türk Lirası</em></span>
+        </div>
+    </div>
+
+    <div class="terms">
+        <h3 style="color: #2563eb;">Sözleşme Koşulları</h3>
+        
+        <div class="term">
+            <div class="term-title">1. Eğitim Hizmetleri</div>
+            <p>Kurum, {{contract.semester}} döneminde {{student.firstName}} {{student.lastName}} isimli öğrenciye {{contract.program}} programında eğitim hizmeti vermeyi taahhüt eder.</p>
+        </div>
+
+        <div class="term">
+            <div class="term-title">2. Ödeme Koşulları</div>
+            <p>Toplam {{currency contract.totalAmount}} tutarındaki ücret, belirlenen taksit planına göre ödenecektir. Gecikmeli ödemelerde gecikme faizi uygulanabilir.</p>
+        </div>
+
+        <div class="term">
+            <div class="term-title">3. İptal ve İade</div>
+            <p>Sözleşmenin iptali durumunda, kurumun iade politikası uygulanacaktır. Detaylar için okul yönetimine başvurunuz.</p>
+        </div>
+
+        <div class="term">
+            <div class="term-title">4. Yükümlülükler</div>
+            <p>Veli, öğrencinin okul kurallarına uymasını sağlamakla yükümlüdür. Kurum, kaliteli eğitim hizmeti sunmakla yükümlüdür.</p>
+        </div>
+
+        <div class="term">
+            <div class="term-title">5. Genel Hükümler</div>
+            <p>Bu sözleşme Türk Hukuku'na tabidir. Taraflar arasında çıkacak anlaşmazlıklar İstanbul mahkemelerinde çözümlenir.</p>
+        </div>
+    </div>
+
+    <div class="signatures">
+        <div class="signature-area">
+            <div class="signature-line"></div>
+            <div><strong>{{tenant.name}}</strong></div>
+            <div>Kurum Temsilcisi</div>
+            <div>Tarih: ________________</div>
+        </div>
+        
+        <div class="signature-area">
+            <div class="signature-line"></div>
+            <div><strong>{{parent.firstName}} {{parent.lastName}}</strong></div>
+            <div>Veli İmzası</div>
+            <div>Tarih: ________________</div>
+        </div>
+    </div>
+
+    <div class="footer">
+        Bu sözleşme {{date contract.createdAt}} tarihinde elektronik ortamda oluşturulmuştur.<br>
+        Sözleşme No: {{contract.contractNumber}} | {{tenant.name}}
+    </div>
+</body>
+</html>
